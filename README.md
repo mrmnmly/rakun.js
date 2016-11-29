@@ -1,3 +1,3 @@
 # rakun.js
 
-Another wannabe un-opinionated javascript framework for quick and flexible development
+Another wannabe un-opinionated javascript framework for fast and flexible development
