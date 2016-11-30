@@ -4,8 +4,9 @@ function Rcn(){
 
 	// add '#' to app url on init
 	if(window.location.href.indexOf('#/') < 0){
-		window.location.href = window.location.href.replace(/#\//g, '');
-		window.location.href += '#/';
+		var url = window.location.href.replace(/#\//g, '');
+		url += '#/';
+		window.location.href = url;
 	}
 }
 
