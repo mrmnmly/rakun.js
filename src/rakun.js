@@ -4,9 +4,9 @@ function Rcn(){
 
 	// add '#' to app url on init
 	if(window.location.href.indexOf('#/') < 0){
-		var url = window.location.href.replace(/#\//g, '');
-		url += '#/';
-		window.location.href = url;
+		window.location.href += '#/';
+		// url += '#/';
+		// window.location.href = url;
 	}
 }
 
@@ -15,8 +15,17 @@ Rcn.prototype.newRouter = function(){
 	var _self = this;
 	var _routes = [];
 
+
 	// TODO:
 	// pass in newRouter option params error route templates (e.g. 404, 500 etc.)
+
+
+	window.onload = function(){
+		if(_routes.length){
+			self.detectRoute();
+			// TODO activate route
+		}
+	};
 
 
 	// binding event listener on hash location change automatically when create new router
@@ -43,7 +52,7 @@ Rcn.prototype.newRouter = function(){
 		});
 
 		// validation
-		if(!route.length){
+		if(!route && !route.length){
 			// TODO: think about raising 404 error page here (if defined) instead of console error
 			throw new Error('Route not found!');
 		}
@@ -87,9 +96,11 @@ Rcn.prototype.newRouter = function(){
 		// add route to _routes array
 		_routes.push(options);
 		console.log(_routes);
+
+		return options;
 	};
 
-	// activate current route in app
+	// activate given route in app
 	_self.activateRoute = function(route){
 		// TODO: add some function that hides all other routes (based on _routes array wrappers or something)
 

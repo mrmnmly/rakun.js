@@ -2,7 +2,7 @@
 	var app = new Rcn();
 	var appRouter = app.newRouter();
 
-	appRouter.newRoute({
+	var homeRoute = appRouter.newRoute({
 		name: 'home',
 		url: '/',
 		renderData: function(){
@@ -16,4 +16,15 @@
 		},
 		template: '<strong>BLA!</strong>'
 	});
+
+	if(window.location.hash == '#/'){
+		appRouter.activateRoute(homeRoute);
+	}else{
+		// TODO: write function that gets current window.location.hash and search for proper route
+		appRouter.detectRoute();
+	}
+
+
+
+	// window.location.href = window.location.pathname;
 }());
