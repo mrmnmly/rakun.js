@@ -4,6 +4,8 @@ function Rcn(){
   _self.stateBox = [];
   // array of all routes
   _self.routeBox = [];
+  // array of all components
+  _self.componentBox = [];
 
   // add '#' to app url on init
   _self.addHashToUrl = (function(){
@@ -20,7 +22,6 @@ function Rcn(){
 // router manages all the routes
 Rcn.prototype.newRouter = function(){
   var _self = this;
-  var routes = _self.routeBox;
 
   // binding hash change event
   _self.bindHashChangeEvent = (function(){
@@ -86,7 +87,6 @@ Rcn.prototype.newRouter = function(){
 
   // find current route in _self.routeBox array (array of all routes) by given url
   _self.findRouteByUrl = function(href, redirect){
-    var self = this;
     // validation
     if(!href || !href.length || typeof href != 'string'){
       throw new Error('No route href specified or is not a string!');
@@ -109,7 +109,6 @@ Rcn.prototype.newRouter = function(){
 
   // find current route in _self.routeBox array (array of all routes) by given route name
   _self.findRouteByName = function(name, redirect){
-    var self = this;
     //validation
     if(!name || !name.length || typeof name != 'string'){
       throw new Error('No route name specified or is not a string!');
@@ -148,7 +147,7 @@ Rcn.prototype.newRouter = function(){
     }
     // template validation
     if(route.template){
-      container.innerHTML = route.template;
+      container.innerHTML = route.template();
       templateFragment.appendChild(container);
       // TODO - add code to remove holder from document fragment immediately after inserting it in above line
     }else if(route.templateUrl){
@@ -195,11 +194,58 @@ Rcn.prototype.newRouter = function(){
 }
 
 Rcn.prototype.newComponent = function(options){
+    var _self = this;
 
+    if(!options.name || !options.name.length){
+        throw new Error('No component name provided!');
+    }
+    if(!options.wrapper){
+        throw new Error('No component wrapper id provided!');
+    }
+
+    // prepare template & necessary variables for rendering
+    var wrapper = document.getElementById(options.wrapper);
+    var templateFragment = document.createDocumentFragment();
+    // create container that will wrap whole template (will be removed later, after render TODO)
+    var container = document.createElement('div');
+
+    if(!wrapper){
+        throw new Error('Component wrapper DOM element not found!');
+    }
+    if(!options.template){
+        throw new Error('Component template not provided!');
+    }
+    container.innerHTML = options.template();
+      // templateFragment.appendChild(container);
+
+    // optional beforeRender method
+    if(options.beforeRender){
+      options.beforeRender(templateFragment);
+    }
+    if(!options.render){
+        throw new Error('Render method not provided!');
+    }
+
+    // add new component to componentBox array (array of all components)
+    _self.componentBox.push(options);
+
+    // define render method for every new component
+    options.render = function(){
+        wrapper.appendChild(templateFragment);
+        if(options.afterRender && typeof options.afterRender === 'function'){
+            setTimeout(function(){
+                options.afterRender();
+            }, 0);
+        }
+    }
+
+    // return new component object
+    return _self;
 }
 
 // find state in _self.stateBox by given state name
-Rcn.prototype.findState = function(stateName){
+// if getValue is true, then this method returns state data value instead of whole state object
+Rcn.prototype.findState = function(stateName, getValue){
   var _self = this;
 
   if(!stateName){
@@ -211,12 +257,17 @@ Rcn.prototype.findState = function(stateName){
   });
 
   if(state && state.length){
-    return state[0];
+    if(getValue){
+      return state[0].data();
+    }else{
+      return state[0];
+    }
   }else{
     return;
   }
 }
 
+// create new state and add it to _self.stateBox array (array of all states)
 Rcn.prototype.newState = function(options){
   var _self = this;
   var states = _self.stateBox;
@@ -228,11 +279,31 @@ Rcn.prototype.newState = function(options){
   if(!options.name || !options.name.length){
     throw new Error('No state name provided!');
   }
-  
-
   // add state to _self.stateBox array (array of all states)
   states.push(options);
   // return new state object
   return _self;
 }
 
+// remove state from _self.stateBox array (array of all states)
+Rcn.prototype.removeState = function(stateName){
+  var _self = this;
+
+  if(!stateName){
+    throw new Error('No state name provided!');
+  }
+
+  var state = _self.stateBox.filter(function(obj){
+    return obj.name = stateName;
+  });
+
+  if(state && state.length){
+    var idx = _self.stateBox.indexOf(state);
+    
+    if(idx != -1){
+      _self.stateBox.splice(idx, 1);
+      return true;
+    }
+  }
+  return _self;
+}
