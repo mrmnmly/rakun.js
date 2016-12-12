@@ -1,0 +1,31 @@
+{
+  "name": "rakun.js",
+  "version": "1.0.0",
+  "description": "Another wannabe un-opinionated javascript framework for quick and flexible development",
+  "main": "/src/rakun.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "minimize": "uglifyjs 'src/rakun.js' --compress --mangle -o 'src/rakun.min.js'",
+    "watch": "onchange src/rakun.js -- npm run minimize"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukaszkups/rakun.js.git"
+  },
+  "keywords": [
+    "spa",
+    "framework",
+    "javascript",
+    "js"
+  ],
+  "author": "lukaszkups",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lukaszkups/rakun.js/issues"
+  },
+  "homepage": "https://github.com/lukaszkups/rakun.js#readme",
+  "dependencies": {
+    "onchange": "^3.0.2",
+    "uglify-js": "^2.7.4"
+  }
+}
