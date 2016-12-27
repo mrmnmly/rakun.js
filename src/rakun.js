@@ -138,7 +138,6 @@ Rcn.prototype.newRouter = function(){
     if(typeof route === 'string'){
       route = _self.findRoute(route);
     }
-    console.log('route found: ', route);
     var wrapper = document.getElementById(route.wrapper);
     var templateFragment = document.createDocumentFragment();
     // create container that will wrap whole template (will be removed later, after render TODO)
