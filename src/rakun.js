@@ -27,6 +27,7 @@ Rcn.prototype.newRouter = function(){
   _self.bindHashChangeEvent = (function(){
     window.addEventListener('hashchange', function(){
       if(!window.location.href || !window.location.href.indexOf('#') < 0){
+        
         throw new Error('Something went wrong (missing \'#\')');
       }
       _self.findRoute(window.location.href.split('#')[1], true);
@@ -57,7 +58,6 @@ Rcn.prototype.newRouter = function(){
       throw new Error('Route DOM wrapper not found in document!');
     }
     if(!options.template && !options.templateUrl){
-      console.log(options)
       throw new Error('No route template specified!');
     }
     if(options.template && options.templateUrl){
@@ -94,10 +94,11 @@ Rcn.prototype.newRouter = function(){
     var currentRoute = _self.routeBox.filter(function(obj){
       return obj.url === href;
     });
+  
     // validation
     if(!currentRoute.length){
       console.warn('Route not found!', href);
-      return;
+      return false;
     }
     // activate found route if redirect is true
     if(redirect === true){
@@ -120,7 +121,7 @@ Rcn.prototype.newRouter = function(){
     // validation
     if(!currentRoute.length){
       console.warn('Route not found!');
-      return;
+      return false;
     }
     // activate found route if redirect is true
     if(redirect === true){
@@ -137,6 +138,7 @@ Rcn.prototype.newRouter = function(){
     if(typeof route === 'string'){
       route = _self.findRoute(route);
     }
+    console.log('route found: ', route);
     var wrapper = document.getElementById(route.wrapper);
     var templateFragment = document.createDocumentFragment();
     // create container that will wrap whole template (will be removed later, after render TODO)
@@ -167,6 +169,7 @@ Rcn.prototype.newRouter = function(){
     if(!route.mounted || route.resetTemplate === true){
       route.mounted === true;
       wrapper.innerHTML = '';
+
       wrapper.appendChild(templateFragment);
       if(route.afterRender && typeof route.afterRender === 'function'){
         setTimeout(function(){
@@ -177,14 +180,16 @@ Rcn.prototype.newRouter = function(){
   }
 
   // redirect app using Rcn built-in mechanism (but we can also do it in traditional way)
-  _self.redirect = function(routeName, routeParams){
+  _self.redirect = function(routeName, routeParams, activateRoute){
     var route = _self.findRoute(routeName);
 
     if(route && route.url){
-      console.log('redirect: ', routeName)
+      console.log('redirect: ', routeName);
       window.location.hash = route.url;
-      // _self.activateRoute(routeName, routeParams);
-    }else{
+      if(activateRoute === true){
+        _self.activateRoute(routeName, routeParams);
+      }
+    }else{    
       throw new Error('Redirection failed - route not found');
     }
   }
@@ -251,11 +256,9 @@ Rcn.prototype.findState = function(stateName, getValue){
   if(!stateName){
     throw new Error('No state name provided!');
   }
-
   var state = _self.stateBox.filter(function(obj){
-    return obj.name = stateName;
+    return obj.name == stateName;
   });
-
   if(state && state.length){
     if(getValue){
       return state[0].data();
@@ -263,14 +266,13 @@ Rcn.prototype.findState = function(stateName, getValue){
       return state[0];
     }
   }else{
-    return;
+    return false;
   }
 }
 
 // create new state and add it to _self.stateBox array (array of all states)
 Rcn.prototype.newState = function(options){
   var _self = this;
-  var states = _self.stateBox;
 
   // newState options validation
   if(!options){
@@ -279,8 +281,16 @@ Rcn.prototype.newState = function(options){
   if(!options.name || !options.name.length){
     throw new Error('No state name provided!');
   }
-  // add state to _self.stateBox array (array of all states)
-  states.push(options);
+  var sameNameHelper = _self.stateBox.filter(function(obj){
+    return obj.name === options.name;
+  });
+
+  if(sameNameHelper && sameNameHelper.length){
+    console.warn('Someone tried to create state with existing name');
+    return false;
+  }
+  //self.stateBox = _self.stateBox.splice(0);
+  _self.stateBox.push(options);
   // return new state object
   return _self;
 }
@@ -294,11 +304,11 @@ Rcn.prototype.removeState = function(stateName){
   }
 
   var state = _self.stateBox.filter(function(obj){
-    return obj.name = stateName;
+    return obj.name === stateName;
   });
 
   if(state && state.length){
-    var idx = _self.stateBox.indexOf(state);
+    var idx = _self.stateBox.indexOf(state[0]);
     
     if(idx != -1){
       _self.stateBox.splice(idx, 1);
@@ -306,4 +316,23 @@ Rcn.prototype.removeState = function(stateName){
     }
   }
   return _self;
+}
+
+Rcn.prototype.updateState = function(stateName, data){
+  var _self = this;
+
+  if(!stateName){
+    throw new Error('State name not provided!');
+  }
+  if(!_self.findState(stateName)){
+    throw new Erorr('State not found in stateBox!');
+  }
+  if(!data){
+    throw new Error('Update state data not provided!');
+  }
+
+  var state = _self.findState(stateName);
+
+  state.data = data;
+  return state;
 }
