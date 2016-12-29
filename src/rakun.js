@@ -91,7 +91,11 @@ Rcn.prototype.newRouter = function(){
     if(!href || !href.length || typeof href != 'string'){
       throw new Error('No route href specified or is not a string!');
     }
-    if(href.indexOf('/') > 0){
+    if(href.indexOf('/') === 0){
+      href = href.splice(0, 1);
+    }
+    
+    if(href.indexOf('/') > -1){
       href = href.split('/')[0];
     }
     var currentRoute = _self.routeBox.filter(function(obj){
