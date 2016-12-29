@@ -332,6 +332,8 @@ Rcn.prototype.updateState = function(stateName, data){
 
   var state = _self.findState(stateName);
 
-  state.data = data;
+  state.data = function(){
+    return data;
+  };
   return state;
 }
