@@ -92,7 +92,7 @@ Rcn.prototype.newRouter = function(){
       throw new Error('No route href specified or is not a string!');
     }
     if(href.indexOf('/') === 0){
-      href = href.splice(0, 1);
+      href = href.slice(1, href.length);
     }
     
     if(href.indexOf('/') > -1){
