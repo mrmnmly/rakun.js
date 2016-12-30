@@ -98,7 +98,7 @@ Rcn.prototype.newRouter = function(){
     if(href.indexOf('/') > -1){
       href = href.split('/')[0];
     }
-    href = '/' + href;
+    href = '/' + href + '/';
     var currentRoute = _self.routeBox.filter(function(obj){
       return obj.url === href;
     });
