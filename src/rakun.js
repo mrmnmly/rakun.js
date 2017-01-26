@@ -1,351 +1,266 @@
-function Rcn(){
-  var _self = this;
-  // array of all states
-  _self.stateBox = [];
-  // array of all routes
-  _self.routeBox = [];
-  // array of all components
-  _self.componentBox = [];
+// Rkn.js version 0.2.0
+// latest commit: 25/01/2017
+// author: @lukaszkups
+// www: http://lukaszkups.net
+// repository: https://github.com/lukaszkups/rakun.js
 
-  // add '#' to app url on init
-  _self.addHashToUrl = (function(){
-    if(window.location.href.indexOf('#/') < 0){
-      var url = window.location.href.replace(/#\//g, '');
-      url += '#/';
-      window.location.href = url;
-    }
-  }());
 
-  return _self;
-}
-
-// router manages all the routes
-Rcn.prototype.newRouter = function(){
-  var _self = this;
-
-  // binding hash change event
-  _self.bindHashChangeEvent = (function(){
-    window.addEventListener('hashchange', function(){
-      if(!window.location.href || !window.location.href.indexOf('#') < 0){
-        
-        throw new Error('Something went wrong (missing \'#\')');
-      }
-      _self.findRoute(window.location.href.split('#')[1], true);
-    });
-  }());
-
-  // create new route and add it to _self.routeBox array (array of all routes)
-  _self.newRoute = function(options){
-    var self = this;
-
-    // newRoute options validation
-    if(!options){
-      throw new Error('No route params provided!');
-    }
-    if(!options.name || !options.name.length){
-      throw new Error('No route name specified!');
-    }
-    if(options.name.indexOf('/') > -1){
-      throw new Error('Route name shouldn\'t contain slash (/) character!');
-    }
-    if(!options.url || !options.url.length){
-      throw new Error('No route url specified!');
-    }
-    if(!options.wrapper || !options.wrapper.length){
-      throw new Error('No route wrapper DOM id specified!');
-    }
-    if(!document.getElementById(options.wrapper)){
-      throw new Error('Route DOM wrapper not found in document!');
-    }
-    if(!options.template && !options.templateUrl){
-      throw new Error('No route template specified!');
-    }
-    if(options.template && options.templateUrl){
-      throw new Error('Template and templateUrl specified at the same time!');
-    }
-
-    // add newRoute object to _self.routeBox array (array of all routes)
-    _self.routeBox.push(options);
-
-    // reurn newRoute object
-    return self;
-  }
-
-  // choose which mechanism to use depends on provided routeToFind param (route name or route url)
-  // route name will not contain slash character (/)
-  _self.findRoute = function(routeToFind, redirect){
-    if(routeToFind || routeToFind.length || typeof routeToFind === 'string'){
-      if(routeToFind.indexOf('/') > -1){
-        return _self.findRouteByUrl(routeToFind, redirect);
-      }else{
-        return _self.findRouteByName(routeToFind, redirect);
-      }
-    }else{
-      throw new Error('No route to find specified or is not a string!');
-    }
-  }
-
-  // find current route in _self.routeBox array (array of all routes) by given url
-  _self.findRouteByUrl = function(href, redirect){
-    // validation
-    if(!href || !href.length || typeof href != 'string'){
-      throw new Error('No route href specified or is not a string!');
-    }
-    if(href.indexOf('/') === 0){
-      href = href.slice(1, href.length);
-    }
-    
-    if(href.indexOf('/') > -1){
-      href = href.split('/')[0];
-    }
-    if(href.length > 0){
-      href = '/' + href + '/';
-    }else{
-      href = '/';
-    }
-    var currentRoute = _self.routeBox.filter(function(obj){
-      return obj.url === href;
-    });
-  
-    // validation
-    if(!currentRoute.length){
-      console.warn('Route not found!', href);
-      return false;
-    }
-    // activate found route if redirect is true
-    if(redirect === true){
-      _self.activateRoute(currentRoute[0]);
-    }
-    // return found route
-    return currentRoute[0];
-  }
-
-  // find current route in _self.routeBox array (array of all routes) by given route name
-  _self.findRouteByName = function(name, redirect){
-    //validation
-    if(!name || !name.length || typeof name != 'string'){
-      throw new Error('No route name specified or is not a string!');
-    }
-    var currentRoute = _self.routeBox.filter(function(obj){
-      return obj.name === name;
-    });
-
-    // validation
-    if(!currentRoute.length){
-      console.warn('Route not found!');
-      return false;
-    }
-    // activate found route if redirect is true
-    if(redirect === true){
-      _self.activateRoute(currentRoute[0]);
-    }
-    // return found route
-    return currentRoute[0];
-  }
-
-  // activate given route in app
-  // route param can be a string [existing route name] or route object
-  _self.activateRoute = function(route, params){
-    // if given route was a string, then search for it in _self.routeBox (array of all routes)
-    if(typeof route === 'string'){
-      route = _self.findRoute(route);
-    }
-    var wrapper = document.getElementById(route.wrapper);
-    var templateFragment = document.createDocumentFragment();
-    // create container that will wrap whole template (will be removed later, after render TODO)
-    var container = document.createElement('div');
-    // wrapper validation
-    if(!wrapper){
-      throw new Error('Route wrapper does not exist in document!');
-    }
-    // template validation
-    if(route.template){
-      container.innerHTML = route.template();
-      templateFragment.appendChild(container);
-      // TODO - add code to remove holder from document fragment immediately after inserting it in above line
-    }else if(route.templateUrl){
-      // if template has not been defined, then templateUrl should be
-      // TODO: add template load and other stuff here;
-    }else{
-      throw new Error('Template not defined!');
-    }
-
-    // handle beforeRender [optional param] method (passed templateFragmet is for accessing template from that function)  
-    if(route.beforeRender){
-      route.beforeRender(templateFragment);
-    }
-
-    // for the first time, route will not be mounted, so we need to insert it into app template
-    // it will also run every time, if we set route.resetTemplate to true
-    if(!route.mounted || route.resetTemplate === true){
-      route.mounted === true;
-      wrapper.innerHTML = '';
-
-      wrapper.appendChild(templateFragment);
-      if(route.afterRender && typeof route.afterRender === 'function'){
-        setTimeout(function(){
-          route.afterRender();
-        }, 0);
-      }
-    }
-  }
-
-  // redirect app using Rcn built-in mechanism (but we can also do it in traditional way)
-  _self.redirect = function(routeName, routeParams, activateRoute){
-    var route = _self.findRoute(routeName);
-
-    if(route && route.url){
-      console.log('redirect: ', routeName);
-      window.location.hash = route.url;
-      if(activateRoute === true){
-        _self.activateRoute(routeName, routeParams);
-      }
-    }else{    
-      throw new Error('Redirection failed - route not found');
-    }
-  }
-
-  // return new router object
-  return _self;
-}
-
-Rcn.prototype.newComponent = function(options){
+// Immediately invoked functional expression to wrap plugin code
+(function(){
+  // Define constructor
+  this.Rkn = function(){
+    // Define pointer to Rkn object
     var _self = this;
+     
+    // Define Rkn state property
+    _self.state = {};
 
-    if(!options.name || !options.name.length){
-        throw new Error('No component name provided!');
-    }
-    if(!options.wrapper){
-        throw new Error('No component wrapper id provided!');
-    }
-
-    // prepare template & necessary variables for rendering
-    var wrapper = document.getElementById(options.wrapper);
-    var templateFragment = document.createDocumentFragment();
-    // create container that will wrap whole template (will be removed later, after render TODO)
-    var container = document.createElement('div');
-
-    if(!wrapper){
-        throw new Error('Component wrapper DOM element not found!');
-    }
-    if(!options.template){
-        throw new Error('Component template not provided!');
-    }
-    container.innerHTML = options.template();
-      // templateFragment.appendChild(container);
-
-    // optional beforeRender method
-    if(options.beforeRender){
-      options.beforeRender(templateFragment);
-    }
-    if(!options.render){
-        throw new Error('Render method not provided!');
-    }
-
-    // add new component to componentBox array (array of all components)
-    _self.componentBox.push(options);
-
-    // define render method for every new component
-    options.render = function(){
-        wrapper.appendChild(templateFragment);
-        if(options.afterRender && typeof options.afterRender === 'function'){
-            setTimeout(function(){
-                options.afterRender();
-            }, 0);
-        }
-    }
-
-    // return new component object
-    return _self;
-}
-
-// find state in _self.stateBox by given state name
-// if getValue is true, then this method returns state data value instead of whole state object
-Rcn.prototype.findState = function(stateName, getValue){
-  var _self = this;
-
-  if(!stateName){
-    throw new Error('No state name provided!');
-  }
-  var state = _self.stateBox.filter(function(obj){
-    return obj.name == stateName;
-  });
-  if(state && state.length){
-    if(getValue){
-      return state[0].data();
-    }else{
-      return state[0];
-    }
-  }else{
-    return false;
-  }
-}
-
-// create new state and add it to _self.stateBox array (array of all states)
-Rcn.prototype.newState = function(options){
-  var _self = this;
-
-  // newState options validation
-  if(!options){
-    throw new Error('No state params provided!');
-  }
-  if(!options.name || !options.name.length){
-    throw new Error('No state name provided!');
-  }
-  var sameNameHelper = _self.stateBox.filter(function(obj){
-    return obj.name === options.name;
-  });
-
-  if(sameNameHelper && sameNameHelper.length){
-    console.warn('Someone tried to create state with existing name');
-    return false;
-  }
-  //self.stateBox = _self.stateBox.splice(0);
-  _self.stateBox.push(options);
-  // return new state object
-  return _self;
-}
-
-// remove state from _self.stateBox array (array of all states)
-Rcn.prototype.removeState = function(stateName){
-  var _self = this;
-
-  if(!stateName){
-    throw new Error('No state name provided!');
-  }
-
-  var state = _self.stateBox.filter(function(obj){
-    return obj.name === stateName;
-  });
-
-  if(state && state.length){
-    var idx = _self.stateBox.indexOf(state[0]);
+    // Define Rkn state wrapper, which will contain all current Rkn instance states
+    _self.state.states = {};
     
-    if(idx != -1){
-      _self.stateBox.splice(idx, 1);
+    // Define local pointer to Rkn state wrapper
+    var _states = _self.state.states;
+    
+    // Define Rkn component property
+    _self.component = {};
+    
+    // Define Rkn component wrapper, which will contain all Rkn component instances
+    _self.component.components = {};
+
+    // Define local pointer to Rkn component wrapper
+    var _components = _self.component.components;
+    
+    // Define Rkn state/component binding object
+    _self.stateComponent = {};
+    
+    // Define Rkn stateComponent wrapper, which will contain all state/component bindings
+    _self.stateComponent.stateComponents = {};
+
+    // Define local pointer to state/component binding object
+    _stateComponents = _self.stateComponent.stateComponents;
+
+
+    // RKN STATE MANAGEMENT
+
+
+    // Define Rkn state list method, which returns all current Rkn instance states
+    _self.state.prototype.list = function(){
+      return _states; 
+    }
+
+    // Define Rkn state add method
+    _self.state.prototype.add = function(options){
+      // Creating new state object method validation
+      if(!options){
+        throw new Error('No new state object has been provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the new state is not a valid string.');
+      }
+      if(_states[options.name]){
+        throw new Error('State with given name already exists.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('State needs to contain a data value.');
+      }
+      // Add new state to Rkn state wrapper
+      _states[options.name] = options.data;  
+      // Return pointer to added state as a success response
+      return _states[options.name];
+    }
+
+    // Define Rkn state remove method
+    _self.state.prototype.remove = function(stateName){
+      // Remove Rkn state object method validation
+      if(!stateName){
+        throw new Error('State name has not been provided.');
+      }
+      if(typeof stateName !== 'string'){
+        throw new Error('State name is not a valid string.');
+      }
+      if(!_states[stateName]){
+        throw new Error('State doesn\'t exists.');
+      }
+      // Remove state with given name from Rkn states wrapper
+      delete _states[stateName];
+      // Return true as a success response
       return true;
     }
-  }
-  return _self;
-}
 
-Rcn.prototype.updateState = function(stateName, data){
-  var _self = this;
+    // Define Rkn state get method
+    _self.state.prototype.get = function(stateName){
+      // Get Rkn state object method validation
+      if(!stateName){
+        throw new Error('State name has not been provided.');
+      }
+      if(typeof stateName !== 'string'){
+        throw new Error('State name is not a valid string.');
+      }
+      // If desired state doesn't exists, return false, otherwise return it as a success response.
+      if(!_states[stateName]){
+        return false;
+      }else{
+        return _states[stateName];
+      }
+    }
+    
+    // Define Rkn state update method
+    _self.state.prototype.update = function(options){
+      // Update Rkn state method validation
+      if(!options){
+        throw new Error('No update state options has been provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the state is not a valid string.');
+      }
+      if(!_states[options.name]){
+        throw new Error('State doesn\'t exists.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('State needs to contain a data value.');
+      }
+      // Update state
+      _states[options.name] = options.data;
+      // Return pointer to updated state as a success response
+      return _states[options.name];
+    }
 
-  if(!stateName){
-    throw new Error('State name not provided!');
-  }
-  if(!_self.findState(stateName)){
-    throw new Erorr('State not found in stateBox!');
-  }
-  if(!data){
-    throw new Error('Update state data not provided!');
-  }
+    // Define Rkn state update or create method
+    _self.state.prototype.updateOrCreate = function(options){
+      // Update or create Rkn state method validation
+      if(!options){
+        throw new Error('No update state options has been provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the state is not a valid string.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('State needs to contain a data value.');
+      } 
+      // Check if state exits - if true then update, else create a new state
+      // Although this if-else do at the moment same thing, but in the future it will detach binded to state components from existing state (on update)
+      if(!_states[options.name]){
+        _states[options.name] = options.data;
+        // Return pointer to updated state as a success response
+        return _states[options.name];
+      }else{ 
+        _states[options.name] = options.data;
+        // Return pointer to new state as a success response
+        return _states[options.name];
+      }
+    }
+    
 
-  var state = _self.findState(stateName);
+    // RKN COMPONENT MANAGEMENT
 
-  state.data = function(){
-    return data;
-  };
-  return state;
-}
+
+    // Define Rkn component list method, which returns all current Rkn instance components
+    _self.component.prototype.list = function(){
+      return _components; 
+    }
+
+    // Define Rkn add component method
+    _self.component.prototype.add = function(options){
+      // Add Rkn component method validation
+      if(!options){
+        throw new Error('No options for creating new components were provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the component is not a valid string.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('Component data source has not been defined.');
+      }
+      if(options.template === null || options.template === undefined){
+        throw new Error('Component template has not been provided.');
+      }
+      if(!options.wrapper){
+        throw new Error('Component wrapper id has not been provided.');
+      }
+      if(_components[options.name]){
+        throw new Error('Component with given name already exists.');
+      }
+      // Add new component to current Rkn instance component wrapper
+      _components[options.name] = options;
+      // Return created component as a success response
+      return _components[options.name];
+    }
+
+    // Define Rkn component remove method 
+    _self.component.prototype.remove = function(componentName){
+      // Remove Rkn component method validation
+      if(!componentName || !componentName.length){
+        throw new Error('Component name has not been provided.');
+      }
+      if(typeof componentName !== 'string'){
+        throw new Error('Given component name is not a valid string.');
+      }
+      if(!_components[componentName]){
+        throw new Error('Component doesn\'t exists.');
+      }
+      // Remove Rkn component
+      delete _components[componentName];
+      // Return true as a success reponse
+      return true;
+    }
+    
+    // Define Rkn component update
+    _self.component.prototype.update = function(options){
+      // Update Rkn component method validation
+      if(!options){
+        throw new Error('No options for creating new components were provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the component is not a valid string.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('Component data source has not been defined.');
+      }
+      if(options.template === null || options.template === undefined){
+        throw new Error('Component template has not been provided.');
+      }
+      if(!options.wrapper){
+        throw new Error('Component wrapper id has not been provided.');
+      }
+      if(!_components[options.name]){
+        throw new Error('Component with given name doesn\'t exists.');
+      }
+      // Update existing Rkn component
+      _components[options.name] = options;
+      // Return updated component as a success reponse
+      return _components[options.name];
+    }
+    
+    // Define Rkn component update or create method
+    _self.component.prototype.updateOrCreate = function(options){
+      // Update or create  Rkn component method validation
+      if(!options){
+        throw new Error('No options for creating of updating component were provided.');
+      }
+      if(!options.name || !options.name.length || typeof options.name !== 'string'){
+        throw new Error('Name of the component is not a valid string.');
+      }
+      if(options.data === null || options.data === undefined){
+        throw new Error('Component data source has not been defined.');
+      }
+      if(options.template === null || options.template === undefined){
+        throw new Error('Component template has not been provided.');
+      }
+      if(!options.wrapper){
+        throw new Error('Component wrapper id has not been provided.');
+      }
+      // Update or create existing Rkn component
+      _components[options.name] = options;
+      // Return updated or created component as a success reponse
+      return _components[options.name];
+    }
+    
+
+    // RKN STATE/COMPONENT MANAGEMENT 
+
+
+    //   
+
+  }
+}());
+
