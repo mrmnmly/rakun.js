@@ -5,8 +5,8 @@
   "main": "/src/rakun.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "minimize": "uglifyjs 'src/rakun.js' --compress --mangle -o 'src/rakun.min.js'",
-    "watch": "onchange src/rakun.js -- npm run minimize"
+    "minimize": "uglifyjs 'src/rkn.js' --compress --mangle -o 'src/rkn.min.js'",
+    "watch": "onchange src/rkn.js -- npm run minimize"
   },
   "repository": {
     "type": "git",
