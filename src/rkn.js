@@ -8,7 +8,7 @@
 // Immediately invoked functional expression to wrap plugin code
 (function(){
   // Define constructor
-  this.Rkn = {};     
+  this.Rkn = function(){};     
 
   Rkn.prototype.state = { 
     // Rkn.state.list property contains all current Rkn instance states
