@@ -13,7 +13,7 @@
   Rkn.prototype.state = { 
     // Rkn.state.list property contains all current Rkn instance states
     list: {},
-
+  
     // Rkn.state.add adds new state to current Rkn instance
     add: function(options){
       // Creating new state object method validation
@@ -119,11 +119,32 @@
 
 
   // RKN COMPONENT MANAGEMENT
+  
+      
+  // function that adds render method to every new component
+  var addComponentRenderMethod = function(component){
+    // addComponentRenderMethod validation
+    if(!component){
+      throw new Error('No component for adding render method has been provided.');
+    }
 
+    if(component.render && typeof component.render === 'function'){
+      console.warn('Component has render method already.');
+      return false;
+    }
+    var data = component.data;
+    
+    component.prototype.render = function(data){
+      // TODO get component data, target wrapper etc. and run rendering here somehow   
+    }
+  }
 
   Rkn.prototype.component = {
     // Rkn.component.list property contains all current Rkn instance component instances
     list: {},
+    
+    // Rkn.component.counter is used for creating unique id for every Rkn component
+    counter: 0,
 
     // Rkn.component.add adds new component to current Rkn instance
     add: function(options){
@@ -170,6 +191,23 @@
       return true;
     },
     
+    // Rkn.component.get returns component based on given component name or, if doesn't exists - false
+    get: function(componentName){
+      // Get Rkn state object method validation
+      if(!componentName || componentName.length === 0){
+        throw new Error('State name has not been provided.');
+      }
+      if(typeof componentName !== 'string'){
+        throw new Error('State name is not a valid string.');
+      }
+      // If desired state doesn't exists, return false, otherwise return it as a success response.
+      if(!this.list[componentName]){
+        return false;
+      }else{
+        return this.list[componentName];
+      }
+    },
+
     // Rkn.component.update updates existing Rkn component based on given component object
     update: function(options){
       // Update Rkn component method validation
@@ -219,11 +257,37 @@
       this.list[options.name] = options;
       // Return updated or created component as a success reponse
       return this.list[options.name];
+    },
+
+    // Rkn.component.render trigger render function,
+    render: function(componentName, data){
+      
+      // Component render method validation
+      if(!componentName || componentName.length === 0){
+        throw new Error('Component name has not been provided.');
+      }
+      var component = this.list[componentName];
+
+      if(!component){
+        throw new Error('Component with given name doesn\'t exists.');
+      }
+      if(!component.render || typeof component.render !== 'function'){
+        throw new Error('Component with given name doesn\'t have render() method or it is not a function.'); 
+      }
+      component.render(data);
+      this.counter++;      
+      return true;
     }
   } 
 
-    // RKN STATE/COMPONENT MANAGEMENT 
 
+  // RKN ROUTER 
+
+  
+  Rkn.prototype.router = function(){
+  
+  }
+  
 
     // bind newly created component to data source state
     // TODO
